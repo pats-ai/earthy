@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lodge Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3EDE3;--surface:#FBF7F1;--s2:#EDE4D6;--s3:#E2D4C0;
+  --text:#251A0C;--t2:#7A5C38;--t3:#B09070;--border:#D4C0A4;
+  --tc:#9B4520;--tcd:#FAEDE6;--tcb:#E8BBA8;
+  --moss:#4A7040;--mossd:#E8F0E4;--mossb:#AACCA0;
+  --walnut:#6A4828;--walnutd:#F2E8DC;--walnutb:#C8A880;
+  --clay:#B87830;--clayd:#FBF0E0;--clayb:#E4C080;
+  --slate:#485870;--slated:#E8ECF4;--slateb:#A8B8CC;
+  --ochre:#9A7820;--ochred:#FAF3DC;--ochreb:#D8C070;
+  --r:16px;--rsm:10px;
+  --sh:0 2px 16px rgba(37,26,12,.09);--shsm:0 1px 5px rgba(37,26,12,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.app{flex:1;overflow-y:auto;padding-bottom:88px;-webkit-overflow-scrolling:touch}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 18px 11px;position:sticky;top:0;z-index:200;box-shadow:var(--shsm);flex-shrink:0}
+.hdr-r{display:flex;justify-content:space-between;align-items:center}
+.logo{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;font-style:italic;color:var(--text)}
+.logo em{color:var(--tc);font-style:normal}
+.rtog{display:flex;background:var(--s2);border-radius:999px;padding:3px;gap:2px}
+.rbtn{border:none;background:transparent;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+.rbtn.active{background:var(--surface);color:var(--tc);box-shadow:var(--shsm)}
+.hdr-sub{font-size:11px;color:var(--t3);margin-top:3px;font-style:italic}
+
+/* NAV */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0 14px;z-index:100;box-shadow:0 -2px 14px rgba(37,26,12,.08)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;font-family:inherit;padding:3px 0;transition:all .15s;position:relative}
+.ni-ic{font-size:19px}.ni-lb{font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.04em;text-transform:uppercase}
+.ni.active .ni-lb{color:var(--tc)}.ni.active .ni-ic{transform:translateY(-1px)}
+.ni .badge-dot{position:absolute;top:1px;right:calc(50% - 16px);width:7px;height:7px;background:var(--tc);border-radius:50%;border:2px solid var(--surface);display:none}
+.ni .badge-dot.show{display:block}
+
+/* SCREENS */
+.scr{display:none;padding:14px 13px 0}.scr.active{display:block}
+
+/* NOTIFICATIONS BANNER */
+.notif-banner{background:var(--tcd);border:1px solid var(--tcb);border-radius:var(--rsm);padding:10px 13px;margin-bottom:12px;cursor:pointer}
+.notif-banner .nb-title{font-size:12px;font-weight:600;color:var(--tc);margin-bottom:4px}
+.notif-banner .nb-item{font-size:11px;color:var(--t2);line-height:1.6;display:flex;gap:6px}
+.notif-banner .nb-item::before{content:'•';color:var(--tc);flex-shrink:0}
+
+/* SUMMARY GRID */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shsm)}
+.sc.full{grid-column:1/-1}
+.s-lb{font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.s-v{font-size:24px;font-weight:700;font-family:'Libre Baskerville',serif;line-height:1}
+.s-v.tc{color:var(--tc)}.s-v.moss{color:var(--moss)}.s-v.clay{color:var(--clay)}.s-v.walnut{color:var(--walnut)}.s-v.ochre{color:var(--ochre)}.s-v.slate{color:var(--slate)}
+.s-sub{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* ROOM GRID */
+.rg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.rt{border-radius:12px;padding:10px 5px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:all .18s;position:relative}
+.rt:active{transform:scale(.95)}
+.rt.available{background:var(--mossd);border-color:var(--mossb)}
+.rt.occupied{background:var(--tcd);border-color:var(--tcb)}
+.rt.reserved{background:var(--slated);border-color:var(--slateb)}
+.rt.longterm{background:var(--walnutd);border-color:var(--walnutb)}
+.rt.nw::after{content:'🔧';position:absolute;top:2px;right:3px;font-size:8px}
+.rn{font-size:15px;font-weight:700;font-family:'Libre Baskerville',serif}
+.rt.available .rn{color:var(--moss)}.rt.occupied .rn{color:var(--tc)}.rt.reserved .rn{color:var(--slate)}.rt.longterm .rn{color:var(--walnut)}
+.rt-tg{font-size:8px;font-weight:500;margin-top:2px;opacity:.6}
+.rt-g{font-size:8px;color:var(--t2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* LEGEND */
+.leg{display:flex;gap:9px;margin-bottom:12px;flex-wrap:wrap}
+.li-l{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t2);font-weight:500}
+.ld{width:7px;height:7px;border-radius:50%}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:11px;box-shadow:var(--shsm)}
+.card-t{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;font-style:italic;color:var(--text);margin-bottom:12px}
+
+/* FORM */
+.fld{margin-bottom:11px}
+.fld label{font-size:10px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase}
+.fld input,.fld select,.fld textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--tc);box-shadow:0 0 0 3px var(--tcd)}
+.fld select option{background:var(--surface)}
+.fld textarea{resize:vertical;min-height:72px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+/* BUTTONS */
+.btn{width:100%;padding:12px;border:none;border-radius:999px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .18s;letter-spacing:.02em}
+.btn-p{background:var(--tc);color:#fff;box-shadow:0 4px 12px rgba(155,69,32,.22)}.btn-p:active{transform:scale(.98)}
+.btn-out{background:transparent;border:1.5px solid var(--border);color:var(--t2)}
+.btn-moss{background:var(--moss);color:#fff}
+.btn-sm{padding:6px 14px;font-size:11px;width:auto;border-radius:999px;font-weight:600}
+.btn-danger{background:var(--tcd);color:var(--tc);border:1px solid var(--tcb)}
+.btn-walnut{background:var(--walnutd);color:var(--walnut);border:1px solid var(--walnutb)}
+
+/* PILLS */
+.pills{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.pill{padding:6px 14px;border-radius:999px;font-size:11px;font-weight:600;border:1.5px solid var(--border);background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+.pill.active{background:var(--tc);color:#fff;border-color:var(--tc);box-shadow:0 3px 8px rgba(155,69,32,.18)}
+
+/* LIST ITEMS */
+.bi{background:var(--surface);border-radius:var(--rsm);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);box-shadow:var(--shsm);border-left:4px solid transparent}
+.bi.in{border-left-color:var(--moss)}.bi.res{border-left-color:var(--slate)}.bi.lt{border-left-color:var(--walnut)}.bi.out{border-left-color:var(--border);opacity:.6}
+.bi.reno{border-left-color:var(--clay)}.bi.note-open{border-left-color:var(--tc)}.bi.note-done{border-left-color:var(--moss);opacity:.65}
+.bn{font-size:14px;font-weight:600;font-family:'Libre Baskerville',serif;font-style:italic}
+.bm{font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5}
+.bact{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+
+/* BADGES */
+.bdg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.03em}
+.bdg-moss{background:var(--mossd);color:var(--moss)}.bdg-slate{background:var(--slated);color:var(--slate)}
+.bdg-tc{background:var(--tcd);color:var(--tc)}.bdg-walnut{background:var(--walnutd);color:var(--walnut)}
+.bdg-clay{background:var(--clayd);color:var(--clay)}.bdg-ochre{background:var(--ochred);color:var(--ochre)}
+.bdg-gray{background:var(--s3);color:var(--t3)}.bdg-done{background:var(--mossd);color:var(--moss)}
+
+/* REP ROWS */
+.rep-bar{height:5px;background:var(--s3);border-radius:999px;margin-top:5px;overflow:hidden}
+.rep-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--tc),var(--clay))}
+.rr{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:center}
+.rr:last-child{border:none}
+
+/* MISC */
+.stit{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;font-style:italic;color:var(--text);margin:14px 0 8px}
+.empty{text-align:center;padding:28px 16px;color:var(--t3);font-size:13px;font-style:italic}
+.ibox{background:var(--clayd);border:1px solid var(--clayb);border-radius:var(--rsm);padding:10px 13px;font-size:12px;color:var(--walnut);margin-bottom:11px;line-height:1.6}
+.rsh{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.rsh h3{font-family:'Libre Baskerville',serif;font-size:14px;font-style:italic;color:var(--text)}
+.ap{background:var(--mossd);color:var(--moss);border:1px solid var(--mossb);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:600}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end}
+.filter-bar .fld{margin-bottom:0;flex:1;min-width:100px}
+.filter-bar label{font-size:9px}
+.filter-bar input,.filter-bar select{padding:7px 10px;font-size:12px}
+
+/* RENO SUMMARY PILLS */
+.rsumm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:13px}
+.rsp{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 8px;text-align:center;box-shadow:var(--shsm)}
+.rsp-v{font-size:18px;font-weight:700;font-family:'Libre Baskerville',serif;color:var(--tc)}
+.rsp-l{font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+
+/* DIRECTORY */
+.dir-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shsm);display:flex;justify-content:space-between;align-items:flex-start}
+.dir-info .dir-name{font-size:14px;font-weight:600;font-family:'Libre Baskerville',serif;font-style:italic}
+.dir-info .dir-meta{font-size:12px;color:var(--t2);margin-top:3px}
+.dir-info .dir-spec{font-size:11px;color:var(--t3);margin-top:2px}
+.dir-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.call-btn{background:var(--mossd);color:var(--moss);border:1px solid var(--mossb);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;text-align:center}
+.wa-btn{background:var(--mossd);color:var(--moss);border:1px solid var(--mossb);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+
+/* MODAL */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(37,26,12,.5);z-index:300;align-items:flex-end;justify-content:center;max-width:480px;margin:0 auto;backdrop-filter:blur(3px)}
+.modal-wrap.open{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px 32px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 -5px 32px rgba(37,26,12,.15)}
+.mh{width:34px;height:4px;background:var(--border);border-radius:999px;margin:0 auto 14px}
+.mt{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;font-style:italic;color:var(--text);margin-bottom:14px}
+
+/* DESK PAYMENT FORM */
+.pay-method-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pay-opt{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s}
+.pay-opt.selected{border-color:var(--tc);background:var(--tcd)}
+.pay-opt .po-icon{font-size:20px;margin-bottom:4px}
+.pay-opt .po-label{font-size:11px;font-weight:600;color:var(--t2)}
+.pay-opt.selected .po-label{color:var(--tc)}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-r">
+    <div class="logo">🏡 <em>Lodge</em></div>
+    <div class="rtog">
+      <button class="rbtn active" onclick="setRole('desk')">🛎 Desk</button>
+      <button class="rbtn" onclick="setRole('mgr')">📊 Manager</button>
+    </div>
+  </div>
+  <div class="hdr-sub" id="hdr-date"></div>
+</div>
+
+<div class="app" id="app">
+
+<!-- HOME -->
+<div class="scr active" id="scr-home">
+  <div style="margin-top:10px">
+    <div id="notif-area"></div>
+    <div class="sg">
+      <div class="sc"><div class="s-lb">Occupied</div><div class="s-v tc" id="hm-occ">0</div><div class="s-sub">rooms tonight</div></div>
+      <div class="sc"><div class="s-lb">Available</div><div class="s-v moss" id="hm-av">0</div><div class="s-sub">per-night free</div></div>
+      <div class="sc"><div class="s-lb">Long-Term</div><div class="s-v walnut" id="hm-lt">0</div><div class="s-sub">tenanted</div></div>
+      <div class="sc"><div class="s-lb">Today</div><div class="s-v clay" id="hm-ci">0</div><div class="s-sub" id="hm-co"></div></div>
+    </div>
+    <div class="rsh"><h3>All Rooms</h3><div class="ap" id="avp">—</div></div>
+    <div class="leg">
+      <div class="li-l"><div class="ld" style="background:var(--moss)"></div>Available</div>
+      <div class="li-l"><div class="ld" style="background:var(--tc)"></div>Occupied</div>
+      <div class="li-l"><div class="ld" style="background:var(--slate)"></div>Reserved</div>
+      <div class="li-l"><div class="ld" style="background:var(--walnut)"></div>Long-Term</div>
+      <div class="li-l"><span>🔧</span><span>Fix needed</span></div>
+    </div>
+    <div class="rg" id="room-grid"></div>
+    <div class="stit">Today's Activity</div>
+    <div id="today-act"></div>
+  </div>
+</div>
+
+<!-- BOOKINGS -->
+<div class="scr" id="scr-bookings">
+  <div class="pills" style="margin-top:10px">
+    <button class="pill active" onclick="setBookTab('active')" id="btab-active">Active</button>
+    <button class="pill" onclick="setBookTab('new')" id="btab-new">+ New</button>
+    <button class="pill" onclick="setBookTab('lt')" id="btab-lt">Long-Term</button>
+    <button class="pill" onclick="setBookTab('all')" id="btab-all">All</button>
+  </div>
+  <div id="bv-active"><div id="active-list"></div></div>
+  <div id="bv-new" style="display:none">
+    <div class="ibox" id="bk-info">Select a room to see rates</div>
+    <div class="card">
+      <div class="card-t">New Booking</div>
+      <div class="fld"><label>Guest Full Name</label><input id="b-guest" type="text" placeholder="Full name"></div>
+      <div class="fld"><label>Phone</label><input id="b-phone" type="tel" placeholder="+255..."></div>
+      <div class="frow">
+        <div class="fld"><label>Room</label><select id="b-room" onchange="onRC()"></select></div>
+        <div class="fld" id="nf"><label>Nights</label><input id="b-nights" type="number" value="1" min="1" onchange="calcAmt()"></div>
+      </div>
+      <div id="ltf" style="display:none">
+        <div class="frow">
+          <div class="fld"><label>Billing</label><select id="b-bill" onchange="calcAmt()"><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select></div>
+          <div class="fld"><label>Duration</label><input id="b-dur" type="number" value="1" min="1" onchange="calcAmt()"></div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Check-in</label><input id="b-ci" type="date"></div>
+        <div class="fld"><label>Status</label><select id="b-st"><option value="reserved">Reserved</option><option value="checked-in">Check In Now</option></select></div>
+      </div>
+      <div class="fld"><label>Amount (TSh)</label><input id="b-amt" type="number" placeholder="Auto-calculated"></div>
+      <div class="fld"><label>Payment Method</label>
+        <select id="b-pay">
+          <option value="cash">Cash</option>
+          <option value="mpesa">M-Pesa / Mobile Money</option>
+          <option value="tigopesa">Tigo Pesa</option>
+          <option value="airtelmoney">Airtel Money</option>
+          <option value="bank">Bank Transfer</option>
+          <option value="pending">Pending / Credit</option>
+        </select>
+      </div>
+      <div class="fld" id="ref-field" style="display:none"><label>Mobile Money Ref #</label><input id="b-ref" type="text" placeholder="Transaction reference..."></div>
+      <div class="fld"><label>Notes</label><input id="b-notes" type="text" placeholder="Special requests..."></div>
+      <button class="btn btn-p" onclick="addBooking()">✓ Confirm Booking</button>
+    </div>
+  </div>
+  <div id="bv-lt" style="display:none"><div id="lt-list"></div></div>
+  <div id="bv-all" style="display:none"><div id="all-list"></div></div>
+</div>
+
+<!-- REPAIRS -->
+<div class="scr" id="scr-reno">
+  <div style="margin-top:10px">
+    <div class="rsumm">
+      <div class="rsp"><div class="rsp-v" id="rn-cost">0</div><div class="rsp-l">TSh Spent</div></div>
+      <div class="rsp"><div class="rsp-v" id="rn-notes">0</div><div class="rsp-l">Open Notes</div></div>
+      <div class="rsp"><div class="rsp-v" id="rn-rooms">0</div><div class="rsp-l">Rooms</div></div>
+    </div>
+    <div class="pills">
+      <button class="pill active" onclick="setRenoTab('notes')" id="rt-notes">🔧 Notes</button>
+      <button class="pill" onclick="setRenoTab('costs')" id="rt-costs">💰 Costs</button>
+      <button class="pill" onclick="setRenoTab('anote')" id="rt-anote">+ Note</button>
+      <button class="pill" onclick="setRenoTab('acost')" id="rt-acost">+ Cost</button>
+    </div>
+    <div id="rv-notes">
+      <div class="filter-bar">
+        <div class="fld"><label>Room</label><select id="fn-filter-room" onchange="renderFN()"><option value="">All Rooms</option></select></div>
+        <div class="fld"><label>Priority</label><select id="fn-filter-pri" onchange="renderFN()"><option value="">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        <div class="fld"><label>Status</label><select id="fn-filter-status" onchange="renderFN()"><option value="open">Open</option><option value="resolved">Resolved</option><option value="">All</option></select></div>
+      </div>
+      <div id="fn-list"></div>
+    </div>
+    <div id="rv-costs" style="display:none">
+      <div class="filter-bar">
+        <div class="fld"><label>Room</label><select id="rc-filter-room" onchange="renderRC()"><option value="">All Rooms</option></select></div>
+        <div class="fld"><label>Contractor</label><input id="rc-filter-con" type="text" placeholder="Search..." oninput="renderRC()"></div>
+        <div class="fld"><label>Category</label><select id="rc-filter-cat" onchange="renderRC()"><option value="">All</option><option value="plumbing">Plumbing</option><option value="electrical">Electrical</option><option value="painting">Painting</option><option value="furniture">Furniture</option><option value="flooring">Flooring</option><option value="roofing">Roofing</option><option value="general">General</option></select></div>
+      </div>
+      <div class="filter-bar">
+        <div class="fld"><label>From</label><input id="rc-filter-from" type="date" onchange="renderRC()"></div>
+        <div class="fld"><label>To</label><input id="rc-filter-to" type="date" onchange="renderRC()"></div>
+      </div>
+      <div id="rc-total-line" style="margin-bottom:8px;font-size:12px;color:var(--t2);font-weight:500"></div>
+      <div id="rc-list"></div>
+    </div>
+    <div id="rv-anote" style="display:none">
+      <div class="card">
+        <div class="card-t">Log a Fix Note</div>
+        <div class="fld"><label>Room</label><select id="fn-room"></select></div>
+        <div class="fld"><label>What needs fixing?</label><textarea id="fn-desc" placeholder="e.g. Ceiling fan noisy, tap leaking, door hinge broken..."></textarea></div>
+        <div class="frow">
+          <div class="fld"><label>Priority</label><select id="fn-pri"><option value="high">🔴 High — urgent</option><option value="medium" selected>🟠 Medium</option><option value="low">🟢 Low</option></select></div>
+          <div class="fld"><label>Reported By</label><input id="fn-rep" type="text" placeholder="Name"></div>
+        </div>
+        <button class="btn btn-p" onclick="addNote()">Save Note</button>
+      </div>
+    </div>
+    <div id="rv-acost" style="display:none">
+      <div class="card">
+        <div class="card-t">Log Renovation Cost</div>
+        <div class="frow">
+          <div class="fld"><label>Room</label><select id="rc-room"></select></div>
+          <div class="fld"><label>Date</label><input id="rc-date" type="date"></div>
+        </div>
+        <div class="fld"><label>Description</label><input id="rc-desc" type="text" placeholder="e.g. Repaint walls, fix plumbing..."></div>
+        <div class="frow">
+          <div class="fld"><label>Amount (TSh)</label><input id="rc-amt" type="number" placeholder="0"></div>
+          <div class="fld"><label>Category</label>
+            <select id="rc-cat">
+              <option value="plumbing">Plumbing</option><option value="electrical">Electrical</option>
+              <option value="painting">Painting</option><option value="furniture">Furniture</option>
+              <option value="flooring">Flooring</option><option value="roofing">Roofing</option><option value="general">General</option>
+            </select>
+          </div>
+        </div>
+        <div class="fld"><label>Contractor</label><select id="rc-con-sel" onchange="rcConChange()"><option value="">— Select or type below —</option></select></div>
+        <div class="fld"><input id="rc-con" type="text" placeholder="Or type contractor name manually" style="margin-top:-6px"></div>
+        <button class="btn btn-p" onclick="addCost()">Save Cost</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTORY -->
+<div class="scr" id="scr-dir">
+  <div style="margin-top:10px">
+    <div class="pills">
+      <button class="pill active" onclick="setDirTab('list')" id="dt-list">Directory</button>
+      <button class="pill" onclick="setDirTab('add')" id="dt-add">+ Add Contact</button>
+    </div>
+    <div id="dv-list">
+      <div class="fld" style="margin-bottom:10px"><input id="dir-search" type="text" placeholder="Search name, specialty..." oninput="renderDir()"></div>
+      <div id="dir-list"></div>
+    </div>
+    <div id="dv-add" style="display:none">
+      <div class="card">
+        <div class="card-t">Add Contractor / Supplier</div>
+        <div class="fld"><label>Full Name</label><input id="dc-name" type="text" placeholder="Name"></div>
+        <div class="fld"><label>Phone Number</label><input id="dc-phone" type="tel" placeholder="+255..."></div>
+        <div class="fld"><label>Specialty / Trade</label><input id="dc-spec" type="text" placeholder="e.g. Plumber, Electrician, Painter..."></div>
+        <div class="fld"><label>Business / Company</label><input id="dc-biz" type="text" placeholder="Optional"></div>
+        <div class="fld"><label>Notes</label><input id="dc-notes" type="text" placeholder="Reliable, cheap, available weekends..."></div>
+        <button class="btn btn-p" onclick="addDir()">Save Contact</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REVENUE (Manager only) -->
+<div class="scr" id="scr-revenue">
+  <div style="margin-top:10px">
+    <div class="pills">
+      <button class="pill active" onclick="setRevP('today')" id="rv-today">Today</button>
+      <button class="pill" onclick="setRevP('week')" id="rv-week">Week</button>
+      <button class="pill" onclick="setRevP('month')" id="rv-month">Month</button>
+    </div>
+    <div class="sg">
+      <div class="sc full"><div class="s-lb">Total Revenue</div><div class="s-v ochre" id="rv-tot">TSh 0</div><div class="s-sub" id="rv-cnt"></div></div>
+      <div class="sc"><div class="s-lb">Per-Night</div><div class="s-v tc" id="rv-night">TSh 0</div></div>
+      <div class="sc"><div class="s-lb">Long-Term</div><div class="s-v walnut" id="rv-lt">TSh 0</div></div>
+      <div class="sc"><div class="s-lb">Lodge Expenses</div><div class="s-v tc" id="rv-exp">TSh 0</div></div>
+      <div class="sc"><div class="s-lb">Reno Costs</div><div class="s-v clay" id="rv-reno">TSh 0</div></div>
+      <div class="sc full"><div class="s-lb">Net Profit (after all costs)</div><div class="s-v moss" id="rv-prof">TSh 0</div></div>
+    </div>
+    <div class="card"><div class="card-t">By Payment Method</div><div id="rv-pay"></div></div>
+    <div class="card"><div class="card-t">Reno Costs This Period</div><div id="rv-reno-break"></div></div>
+    <div class="card"><div class="card-t">Occupancy</div><div id="rv-occ"></div></div>
+  </div>
+</div>
+
+<!-- EXPENSES (Manager only) -->
+<div class="scr" id="scr-expenses">
+  <div style="margin-top:10px">
+    <div class="card">
+      <div class="card-t">Add Expense</div>
+      <div class="fld"><label>Description</label><input id="ex-desc" type="text" placeholder="Generator fuel, cleaning supplies..."></div>
+      <div class="frow">
+        <div class="fld"><label>Amount (TSh)</label><input id="ex-amt" type="number" placeholder="0"></div>
+        <div class="fld"><label>Category</label>
+          <select id="ex-cat">
+            <option value="utilities">Utilities</option><option value="staff">Staff</option>
+            <option value="maintenance">Maintenance</option><option value="supplies">Supplies</option><option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="addExpense()">Save Expense</button>
+    </div>
+    <div class="stit">Recent Expenses</div>
+    <div id="exp-list"></div>
+  </div>
+</div>
+
+</div><!-- end app -->
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ni active" onclick="showScr('home',this)"><span class="ni-ic">🏡</span><span class="ni-lb">Rooms</span><span class="badge-dot" id="nd-home"></span></button>
+  <button class="ni" onclick="showScr('bookings',this)"><span class="ni-ic">📋</span><span class="ni-lb">Bookings</span></button>
+  <button class="ni" onclick="showScr('reno',this)"><span class="ni-ic">🔧</span><span class="ni-lb">Repairs</span><span class="badge-dot" id="nd-reno"></span></button>
+  <button class="ni" onclick="showScr('dir',this)"><span class="ni-ic">📞</span><span class="ni-lb">Contacts</span></button>
+  <button class="ni mgr-only" onclick="showScr('revenue',this)"><span class="ni-ic">💰</span><span class="ni-lb">Revenue</span></button>
+  <button class="ni mgr-only" onclick="showScr('expenses',this)"><span class="ni-ic">🧾</span><span class="ni-lb">Expenses</span></button>
+</nav>
+
+<!-- Room modal -->
+<div class="modal-wrap" id="rm-modal">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt" id="m-title"></div>
+    <div id="m-body"></div>
+    <button class="btn btn-out" style="margin-top:14px" onclick="closeM()">Close</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const ROOMS=[
+  {id:'1',label:'1',type:'pernight',rate:25000},
+  {id:'2',label:'2',type:'pernight',rate:25000},
+  {id:'3',label:'3',type:'longterm',rate:null,desc:'1-Bed House'},
+  {id:'4',label:'4',type:'pernight',rate:25000},
+  {id:'5',label:'5',type:'pernight',rate:25000},
+  {id:'6',label:'6',type:'longterm',rate:null,desc:'1-Bed House'},
+  {id:'7',label:'7',type:'pernight',rate:25000},
+  {id:'7A',label:'7A',type:'longterm',rate:null,desc:'1-Bed House'},
+  {id:'8',label:'8',type:'pernight',rate:25000},
+  {id:'8A',label:'8A',type:'longterm',rate:null,desc:'1-Bed House'},
+  {id:'9',label:'9',type:'pernight',rate:25000},
+  {id:'10',label:'10',type:'pernight',rate:25000},
+  {id:'11',label:'11',type:'pernight',rate:25000},
+  {id:'12',label:'12',type:'pernight',rate:25000},
+];
+
+let bk  = JSON.parse(localStorage.getItem('lm6_bk')  ||'[]');
+let ex  = JSON.parse(localStorage.getItem('lm6_ex')  ||'[]');
+let lr  = JSON.parse(localStorage.getItem('lm6_lr')  ||'{}');
+let fn  = JSON.parse(localStorage.getItem('lm6_fn')  ||'[]');
+let rc  = JSON.parse(localStorage.getItem('lm6_rc')  ||'[]');
+let dir = JSON.parse(localStorage.getItem('lm6_dir') ||'[]');
+let role='desk', revP='today';
+
+function sv(){
+  localStorage.setItem('lm6_bk', JSON.stringify(bk));
+  localStorage.setItem('lm6_ex', JSON.stringify(ex));
+  localStorage.setItem('lm6_lr', JSON.stringify(lr));
+  localStorage.setItem('lm6_fn', JSON.stringify(fn));
+  localStorage.setItem('lm6_rc', JSON.stringify(rc));
+  localStorage.setItem('lm6_dir',JSON.stringify(dir));
+}
+
+const fmt  = n => 'TSh '+Number(n||0).toLocaleString();
+const fmtk = n => n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'k':String(Math.round(n));
+const tod  = () => new Date().toISOString().split('T')[0];
+
+// ── ROLE ──────────────────────────────────────────────────────────
+function setRole(r){
+  role=r;
+  document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  // show/hide manager nav items
+  document.querySelectorAll('.mgr-only').forEach(el=>{
+    el.style.opacity=r==='mgr'?'1':'0.3';
+    el.style.pointerEvents=r==='mgr'?'auto':'none';
+  });
+  // if desk is on a manager-only screen, go home
+  if(r==='desk'){
+    const active=document.querySelector('.scr.active');
+    if(active&&(active.id==='scr-revenue'||active.id==='scr-expenses')){
+      showScr('home',document.querySelector('.ni'));
+      document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+      document.querySelector('.ni').classList.add('active');
+    }
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+function showScr(id,el){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('scr-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  refreshAll();
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────
+function renderNotifs(){
+  const openNotes = fn.filter(n=>n.status==='open');
+  const highPri   = openNotes.filter(n=>n.priority==='high');
+  const na = document.getElementById('notif-area');
+  // nav dots
+  document.getElementById('nd-home').classList.toggle('show', openNotes.length>0);
+  document.getElementById('nd-reno').classList.toggle('show', openNotes.length>0);
+  if(!openNotes.length){na.innerHTML='';return;}
+  let items = highPri.length
+    ? highPri.slice(0,3).map(n=>`<div class="nb-item">Room ${n.room} — ${n.desc} <strong style="color:var(--tc)">[URGENT]</strong></div>`)
+    : openNotes.slice(0,3).map(n=>`<div class="nb-item">Room ${n.room} — ${n.desc}</div>`);
+  na.innerHTML=`<div class="notif-banner" onclick="showScr('reno',document.querySelectorAll('.ni')[2]);document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.ni')[2].classList.add('active')">
+    <div class="nb-title">🔧 ${openNotes.length} open fix ${openNotes.length===1?'note':'notes'}${highPri.length?' · '+highPri.length+' urgent':''} — tap to view</div>
+    ${items.join('')}
+  </div>`;
+}
+
+// ── ROOM GRID ─────────────────────────────────────────────────────
+function getCO(b){
+  if(b.bookingType==='longterm')return b.endDate||'ongoing';
+  const d=new Date(b.checkin);d.setDate(d.getDate()+(b.nights||1));
+  return d.toISOString().split('T')[0];
+}
+function getRS(rid){
+  const t=tod();
+  const lt=bk.find(b=>b.room===rid&&b.bookingType==='longterm'&&b.status==='checked-in'&&b.checkin<=t);
+  if(lt)return{s:'longterm',b:lt};
+  const oc=bk.find(b=>b.room===rid&&b.status==='checked-in'&&b.checkin<=t&&getCO(b)>=t);
+  if(oc)return{s:'occupied',b:oc};
+  const rs=bk.find(b=>b.room===rid&&b.status==='reserved'&&b.checkin>=t);
+  if(rs)return{s:'reserved',b:rs};
+  return{s:'available',b:null};
+}
+function hasNotes(rid){return fn.some(n=>n.room===rid&&n.status==='open');}
+
+function renderGrid(){
+  const av=ROOMS.filter(r=>getRS(r.id).s==='available').length;
+  document.getElementById('avp').textContent=av+' free';
+  document.getElementById('room-grid').innerHTML=ROOMS.map(r=>{
+    const{s,b}=getRS(r.id);const hw=hasNotes(r.id);
+    const g=b?b.guest.split(' ')[0]:(s==='available'?'Free':'—');
+    return`<div class="rt ${s}${hw?' nw':''}" onclick="openRM('${r.id}')">
+      <div class="rn">${r.label}</div>
+      <div class="rt-tg">${r.type==='longterm'?'L-T':'nightly'}</div>
+      <div class="rt-g">${g}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── HOME ─────────────────────────────────────────────────────────
+function renderHome(){
+  const t=tod();
+  const occ=bk.filter(b=>b.status==='checked-in'&&b.bookingType!=='longterm'&&b.checkin<=t&&getCO(b)>=t).length;
+  const ltA=bk.filter(b=>b.status==='checked-in'&&b.bookingType==='longterm').length;
+  const pnR=ROOMS.filter(r=>r.type==='pernight').length;
+  const ci=bk.filter(b=>b.checkin===t).length;
+  const co=bk.filter(b=>getCO(b)===t&&b.status==='checked-in').length;
+  document.getElementById('hm-occ').textContent=occ;
+  document.getElementById('hm-av').textContent=pnR-occ;
+  document.getElementById('hm-lt').textContent=ltA;
+  document.getElementById('hm-ci').textContent=ci;
+  document.getElementById('hm-co').textContent=co+' check-out'+(co!==1?'s':'')+' due';
+  renderGrid();renderNotifs();
+  const acts=[...bk].filter(b=>b.createdAt===t||b.checkin===t).reverse().slice(0,6);
+  document.getElementById('today-act').innerHTML=acts.length?acts.map(b=>{
+    const sc=b.status==='checked-in'?(b.bookingType==='longterm'?'walnut':'moss'):'slate';
+    const cl=b.status==='checked-in'?(b.bookingType==='longterm'?'lt':'in'):'res';
+    return`<div class="bi ${cl}"><div style="display:flex;justify-content:space-between;align-items:center"><div class="bn">${b.guest}</div><span class="bdg bdg-${sc}">${b.status==='checked-in'?'IN':'RESERVED'}</span></div><div class="bm">Room ${b.room} · ${b.bookingType==='longterm'?'Long-Term':b.nights+'n'} · ${fmt(b.amount)}${b.payment?' · '+b.payment:''}</div></div>`;
+  }).join(''):'<div class="empty">No activity today yet ✨</div>';
+}
+
+// ── ROOM MODAL ───────────────────────────────────────────────────
+function openRM(rid){
+  const room=ROOMS.find(r=>r.id===rid);
+  const{s,b}=getRS(rid);
+  const rates=lr[rid];
+  const openN=fn.filter(n=>n.room===rid&&n.status==='open');
+  const roomC=rc.filter(c=>c.room===rid);
+  const totalC=roomC.reduce((a,c)=>a+(parseFloat(c.amount)||0),0);
+  const sc={available:'moss',occupied:'tc',reserved:'slate',longterm:'walnut'};
+  const rStr=room.type==='pernight'?fmt(room.rate)+'/night':(rates?fmt(rates.monthly)+'/mo · '+fmt(rates.weekly)+'/wk':'Rates not set');
+  document.getElementById('m-title').textContent='Room '+room.label+(room.desc?' · '+room.desc:'');
+  let html=`<div class="rr"><span>Type</span><strong>${room.type==='longterm'?'Long-Term':'Per Night'}</strong></div>
+    <div class="rr"><span>Rate</span><strong style="color:var(--clay)">${rStr}</strong></div>
+    <div class="rr"><span>Status</span><span class="bdg bdg-${sc[s]||'gray'}">${s.toUpperCase()}</span></div>`;
+  if(room.type==='longterm'&&!rates){
+    html+=`<div style="margin:12px 0 7px;font-size:13px;font-weight:600">Set rental rates</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px">
+      <div><label style="font-size:10px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase">Monthly (TSh)</label>
+      <input id="rm-m-${rid}" type="number" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none"></div>
+      <div><label style="font-size:10px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase">Weekly (TSh)</label>
+      <input id="rm-w-${rid}" type="number" placeholder="0" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none"></div>
+    </div>
+    <button class="btn btn-p" style="margin-bottom:11px" onclick="saveRate('${rid}')">Save Rates</button>`;
+  }
+  if(b){
+    html+=`<div class="rr"><span>Guest</span><strong>${b.guest}</strong></div>
+      <div class="rr"><span>Phone</span><strong>${b.phone||'—'}</strong></div>
+      <div class="rr"><span>Check-in</span><strong>${b.checkin}</strong></div>
+      <div class="rr"><span>Check-out</span><strong>${getCO(b)}</strong></div>
+      <div class="rr"><span>Amount</span><strong style="color:var(--clay)">${fmt(b.amount)}</strong></div>
+      <div class="rr"><span>Payment</span><strong style="text-transform:capitalize">${b.payment}${b.ref?' · ref: '+b.ref:''}</strong></div>`;
+    if(s==='occupied'||s==='longterm') html+=`<button class="btn btn-danger" style="margin-top:12px" onclick="chkOut(${b.id})">Check Out / End Tenancy</button>`;
+    if(s==='reserved') html+=`<button class="btn btn-moss" style="margin-top:12px" onclick="chkIn(${b.id});closeM()">✓ Check In Now</button>`;
+  } else {
+    html+=`<button class="btn btn-p" style="margin-top:12px" onclick="closeM();setBookTab('new');showScr('bookings',null);document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.ni')[1].classList.add('active');setTimeout(()=>{document.getElementById('b-room').value='${rid}';onRC()},80)">Book This Room →</button>`;
+  }
+  if(openN.length){
+    html+=`<div style="margin:14px 0 8px;font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;font-style:italic;color:var(--text)">Open Fix Notes (${openN.length})</div>`;
+    html+=openN.map(n=>`<div style="background:var(--tcd);border:1px solid var(--tcb);border-radius:9px;padding:9px 12px;margin-bottom:6px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <strong>${n.desc}</strong>
+        <span style="font-size:10px;font-weight:700;color:${n.priority==='high'?'var(--tc)':n.priority==='medium'?'var(--clay)':'var(--moss)'}">${n.priority.toUpperCase()}</span>
+      </div>
+      <div style="color:var(--t3)">${n.date}${n.reporter?' · '+n.reporter:''}</div>
+      <button class="btn-sm btn-moss btn" style="margin-top:7px;font-size:10px" onclick="resolveN(${n.id})">✓ Mark Resolved</button>
+    </div>`).join('');
+  }
+  if(totalC>0) html+=`<div class="rr" style="margin-top:8px"><span>Total Reno Spend</span><strong style="color:var(--tc)">${fmt(totalC)}</strong></div>`;
+  document.getElementById('m-body').innerHTML=html;
+  document.getElementById('rm-modal').classList.add('open');
+}
+
+function saveRate(rid){
+  const m=parseFloat(document.getElementById('rm-m-'+rid).value)||0;
+  const w=parseFloat(document.getElementById('rm-w-'+rid).value)||0;
+  if(!m&&!w){alert('Enter at least one rate.');return;}
+  lr[rid]={monthly:m,weekly:w};sv();closeM();refreshAll();
+}
+function closeM(){document.getElementById('rm-modal').classList.remove('open');}
+
+// ── BOOKINGS ─────────────────────────────────────────────────────
+function popRoomSel(){
+  ['b-room','fn-room','rc-room'].forEach(sid=>{
+    const sel=document.getElementById(sid);if(!sel)return;
+    const bookOnly=sid==='b-room';
+    sel.innerHTML=ROOMS.map(r=>{
+      if(bookOnly){const{s}=getRS(r.id);const tk=s==='occupied'||s==='longterm';return`<option value="${r.id}"${tk?' disabled':''}>${r.label}${r.desc?' ('+r.desc+')':''} — ${r.type==='pernight'?fmt(r.rate)+'/night':'Long-Term'}${tk?' [Occupied]':''}`;}
+      return`<option value="${r.id}">Room ${r.label}${r.desc?' ('+r.desc+')':''}`;
+    }).join('');
+  });
+  // populate filter selects
+  ['fn-filter-room','rc-filter-room'].forEach(sid=>{
+    const sel=document.getElementById(sid);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">All Rooms</option>'+ROOMS.map(r=>`<option value="${r.id}">Room ${r.label}</option>`).join('');
+    sel.value=cur;
+  });
+  // populate contractor select for cost form
+  const csel=document.getElementById('rc-con-sel');
+  if(csel) csel.innerHTML='<option value="">— Select from directory —</option>'+dir.map(d=>`<option value="${d.name}">${d.name} (${d.spec})</option>`).join('');
+  onRC();
+}
+
+function rcConChange(){
+  const val=document.getElementById('rc-con-sel').value;
+  if(val) document.getElementById('rc-con').value=val;
+}
+
+function onRC(){
+  const rid=document.getElementById('b-room').value;const room=ROOMS.find(r=>r.id===rid);if(!room)return;
+  const isLT=room.type==='longterm';
+  document.getElementById('ltf').style.display=isLT?'block':'none';
+  document.getElementById('nf').style.display=isLT?'none':'block';
+  const rates=lr[rid];const inf=document.getElementById('bk-info');
+  if(isLT) inf.innerHTML=rates?`<strong>Room ${room.label}</strong> · Monthly: <strong>${fmt(rates.monthly)}</strong> · Weekly: <strong>${fmt(rates.weekly)}</strong>`:`<strong>Room ${room.label}</strong> — tap the room tile on Home to set rates first.`;
+  else inf.innerHTML=`<strong>Room ${room.label}</strong> · <strong>${fmt(room.rate)}</strong> per night`;
+  calcAmt();
+}
+
+function calcAmt(){
+  const rid=document.getElementById('b-room').value;const room=ROOMS.find(r=>r.id===rid);if(!room)return;
+  if(room.type==='pernight'){const n=parseInt(document.getElementById('b-nights').value)||1;document.getElementById('b-amt').value=room.rate*n;}
+  else{const bill=document.getElementById('b-bill').value;const dur=parseInt(document.getElementById('b-dur').value)||1;const rates=lr[rid];if(rates)document.getElementById('b-amt').value=(bill==='monthly'?rates.monthly:rates.weekly)*dur;}
+}
+
+// show/hide mobile money ref field
+document.addEventListener('change',e=>{
+  if(e.target.id==='b-pay'){
+    const mm=['mpesa','tigopesa','airtelmoney'];
+    document.getElementById('ref-field').style.display=mm.includes(e.target.value)?'block':'none';
+  }
+  if(e.target.id==='b-room'||e.target.id==='b-nights'||e.target.id==='b-bill'||e.target.id==='b-dur') calcAmt();
+});
+
+function addBooking(){
+  const guest=document.getElementById('b-guest').value.trim();
+  const phone=document.getElementById('b-phone').value.trim();
+  const rid=document.getElementById('b-room').value;
+  const room=ROOMS.find(r=>r.id===rid);
+  const ci=document.getElementById('b-ci').value;
+  const st=document.getElementById('b-st').value;
+  const pay=document.getElementById('b-pay').value;
+  const ref=document.getElementById('b-ref').value.trim();
+  const notes=document.getElementById('b-notes').value;
+  const amt=parseFloat(document.getElementById('b-amt').value)||0;
+  if(!guest||!ci){alert('Please enter guest name and check-in date.');return;}
+  const isLT=room.type==='longterm';
+  let endDate=null,nights=null;
+  if(isLT){const bill=document.getElementById('b-bill').value;const dur=parseInt(document.getElementById('b-dur').value)||1;const d=new Date(ci);if(bill==='monthly')d.setMonth(d.getMonth()+dur);else d.setDate(d.getDate()+dur*7);endDate=d.toISOString().split('T')[0];}
+  else nights=parseInt(document.getElementById('b-nights').value)||1;
+  bk.push({id:Date.now(),guest,phone,room:rid,checkin:ci,status:st,payment:pay,ref,notes,amount:amt,nights,endDate,bookingType:isLT?'longterm':'pernight',billing:isLT?document.getElementById('b-bill').value:null,duration:isLT?document.getElementById('b-dur').value:null,createdAt:tod()});
+  sv();['b-guest','b-phone','b-notes','b-ref'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('b-nights').value='1';
+  alert('Booking confirmed! 🎉');setBookTab('active');refreshAll();
+}
+
+function setBookTab(t){
+  ['active','new','lt','all'].forEach(x=>{document.getElementById('bv-'+x).style.display=x===t?'block':'none';document.getElementById('btab-'+x).classList.toggle('active',x===t);});
+  if(t==='active')renderAB();if(t==='lt')renderLT();if(t==='all')renderAll();if(t==='new')popRoomSel();
+}
+
+function chkIn(id){const b=bk.find(x=>x.id===id);if(b)b.status='checked-in';sv();refreshAll();}
+function chkOut(id){const b=bk.find(x=>x.id===id);if(b){b.status='checked-out';b.checkoutAt=tod();}sv();closeM();refreshAll();}
+
+function renderAB(){
+  const el=document.getElementById('active-list');
+  const active=bk.filter(b=>b.status==='checked-in'||b.status==='reserved').sort((a,b)=>b.id-a.id);
+  el.innerHTML=active.length?active.map(b=>{
+    const sc=b.status==='checked-in'?(b.bookingType==='longterm'?'walnut':'moss'):'slate';
+    const cl=b.status==='checked-in'?(b.bookingType==='longterm'?'lt':'in'):'res';
+    return`<div class="bi ${cl}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="bn">${b.guest}</div><span class="bdg bdg-${sc}">${b.status==='checked-in'?'IN':'RESERVED'}</span></div>
+    <div class="bm">Room ${b.room} · ${b.bookingType==='longterm'?'L-T ('+b.billing+')':b.nights+'n'} · ${b.checkin}${b.bookingType!=='longterm'?' → '+getCO(b):''}</div>
+    <div class="bm">${fmt(b.amount)} · ${b.payment}${b.ref?' ref:'+b.ref:''}${b.phone?' · '+b.phone:''}</div>
+    <div class="bact">${b.status==='reserved'?`<button class="btn btn-sm btn-moss" onclick="chkIn(${b.id});renderAB()">✓ Check In</button>`:''}${b.status==='checked-in'?`<button class="btn btn-sm btn-danger" onclick="chkOut(${b.id})">Check Out</button>`:''}</div></div>`;
+  }).join(''):'<div class="empty">No active bookings right now ✨</div>';
+}
+function renderLT(){const el=document.getElementById('lt-list');const lt=bk.filter(b=>b.bookingType==='longterm').sort((a,b)=>b.id-a.id);el.innerHTML=lt.length?lt.map(b=>`<div class="bi ${b.status==='checked-in'?'lt':b.status==='reserved'?'res':'out'}"><div style="display:flex;justify-content:space-between"><div class="bn">${b.guest}</div><span class="bdg bdg-${b.status==='checked-in'?'walnut':b.status==='reserved'?'slate':'gray'}">${b.status.toUpperCase()}</span></div><div class="bm">Room ${b.room} · ${b.billing} · ${b.checkin} → ${b.endDate||'ongoing'}</div><div class="bm">${fmt(b.amount)} · ${b.payment}${b.ref?' · ref:'+b.ref:''}${b.phone?' · '+b.phone:''}</div></div>`).join(''):'<div class="empty">No long-term tenants yet.</div>';}
+function renderAll(){const el=document.getElementById('all-list');el.innerHTML=[...bk].reverse().map(b=>{const sc=b.status==='checked-in'?(b.bookingType==='longterm'?'walnut':'moss'):b.status==='reserved'?'slate':'gray';return`<div class="bi ${b.status==='checked-in'?(b.bookingType==='longterm'?'lt':'in'):b.status==='reserved'?'res':'out'}"><div style="display:flex;justify-content:space-between"><div class="bn">${b.guest}</div><span class="bdg bdg-${sc}">${b.status.toUpperCase()}</span></div><div class="bm">Room ${b.room} · ${b.checkin} · ${fmt(b.amount)} · ${b.payment}</div></div>`;}).join('')||'<div class="empty">No bookings yet.</div>';}
+
+// ── RENOVATIONS ───────────────────────────────────────────────────
+function addNote(){
+  const room=document.getElementById('fn-room').value;
+  const desc=document.getElementById('fn-desc').value.trim();
+  const pri=document.getElementById('fn-pri').value;
+  const rep=document.getElementById('fn-rep').value.trim();
+  if(!desc){alert('Please describe what needs fixing.');return;}
+  fn.push({id:Date.now(),room,desc,priority:pri,reporter:rep,date:tod(),status:'open'});
+  sv();document.getElementById('fn-desc').value='';document.getElementById('fn-rep').value='';
+  alert('Fix note saved! 📝');setRenoTab('notes');refreshAll();
+}
+function resolveN(id){const n=fn.find(x=>x.id===id);if(n){n.status='resolved';n.resolvedAt=tod();}sv();closeM();refreshAll();}
+
+function addCost(){
+  const room=document.getElementById('rc-room').value;
+  const desc=document.getElementById('rc-desc').value.trim();
+  const amt=parseFloat(document.getElementById('rc-amt').value);
+  const cat=document.getElementById('rc-cat').value;
+  const date=document.getElementById('rc-date').value;
+  const con=document.getElementById('rc-con').value.trim()||document.getElementById('rc-con-sel').value;
+  if(!desc||!amt){alert('Please fill description and amount.');return;}
+  rc.push({id:Date.now(),room,desc,amount:amt,cat,date,contractor:con});
+  sv();document.getElementById('rc-desc').value='';document.getElementById('rc-amt').value='';document.getElementById('rc-con').value='';
+  alert('Renovation cost saved! 🏗️');setRenoTab('costs');refreshAll();
+}
+
+function setRenoTab(t){
+  ['notes','costs','anote','acost'].forEach(x=>{document.getElementById('rv-'+x).style.display=x===t?'block':'none';document.getElementById('rt-'+x).classList.toggle('active',x===t);});
+  if(t==='notes')renderFN();if(t==='costs')renderRC();if(t==='anote'||t==='acost')popRoomSel();
+}
+
+function renderFN(){
+  const el=document.getElementById('fn-list');
+  const filterRoom=document.getElementById('fn-filter-room').value;
+  const filterPri=document.getElementById('fn-filter-pri').value;
+  const filterStatus=document.getElementById('fn-filter-status').value;
+  let notes=[...fn];
+  if(filterRoom) notes=notes.filter(n=>n.room===filterRoom);
+  if(filterPri) notes=notes.filter(n=>n.priority===filterPri);
+  if(filterStatus) notes=notes.filter(n=>n.status===filterStatus);
+  notes.sort((a,b)=>{if(a.status!==b.status)return a.status==='open'?-1:1;const p={high:0,medium:1,low:2};return p[a.priority]-p[b.priority];});
+  el.innerHTML=notes.length?notes.map(n=>`<div class="bi ${n.status==='open'?'note-open':'note-done'}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="bn">Room ${n.room}</div><div class="bm" style="margin-top:4px">${n.desc}</div><div class="bm">${n.date}${n.reporter?' · '+n.reporter:''}</div>${n.resolvedAt?`<div class="bm" style="color:var(--moss)">✓ Resolved ${n.resolvedAt}</div>`:''}</div>
+      <span class="bdg bdg-${n.priority==='high'?'tc':n.priority==='medium'?'clay':'moss'}">${n.priority.toUpperCase()}</span>
+    </div>
+    ${n.status==='open'?`<div class="bact"><button class="btn btn-sm btn-moss" onclick="resolveN(${n.id})">✓ Mark Resolved</button></div>`:''}
+  </div>`).join(''):'<div class="empty">No notes match your filters.</div>';
+}
+
+function renderRC(){
+  const el=document.getElementById('rc-list');
+  const filterRoom=document.getElementById('rc-filter-room').value;
+  const filterCon=document.getElementById('rc-filter-con').value.toLowerCase();
+  const filterCat=document.getElementById('rc-filter-cat').value;
+  const filterFrom=document.getElementById('rc-filter-from').value;
+  const filterTo=document.getElementById('rc-filter-to').value;
+  let costs=[...rc];
+  if(filterRoom) costs=costs.filter(c=>c.room===filterRoom);
+  if(filterCon) costs=costs.filter(c=>c.contractor&&c.contractor.toLowerCase().includes(filterCon));
+  if(filterCat) costs=costs.filter(c=>c.cat===filterCat);
+  if(filterFrom) costs=costs.filter(c=>c.date>=filterFrom);
+  if(filterTo) costs=costs.filter(c=>c.date<=filterTo);
+  costs.sort((a,b)=>b.date.localeCompare(a.date));
+  const total=costs.reduce((a,c)=>a+(parseFloat(c.amount)||0),0);
+  document.getElementById('rc-total-line').textContent=costs.length+' records · Total: '+fmt(total);
+  el.innerHTML=costs.length?costs.map(c=>`<div class="bi reno">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="bn">Room ${c.room} — ${c.desc}</div><div class="bm">${c.cat}${c.contractor?' · '+c.contractor:''} · ${c.date}</div></div>
+      <strong style="color:var(--tc);white-space:nowrap;margin-left:8px">${fmt(c.amount)}</strong>
+    </div>
+  </div>`).join(''):'<div class="empty">No renovation costs match your filters.</div>';
+}
+
+function renderRenoSummary(){
+  const tot=rc.reduce((a,c)=>a+(parseFloat(c.amount)||0),0);
+  const on=fn.filter(n=>n.status==='open').length;
+  const ra=new Set([...fn.map(n=>n.room),...rc.map(c=>c.room)]).size;
+  document.getElementById('rn-cost').textContent=fmtk(tot);
+  document.getElementById('rn-notes').textContent=on;
+  document.getElementById('rn-rooms').textContent=ra;
+}
+
+// ── DIRECTORY ─────────────────────────────────────────────────────
+function addDir(){
+  const name=document.getElementById('dc-name').value.trim();
+  const phone=document.getElementById('dc-phone').value.trim();
+  const spec=document.getElementById('dc-spec').value.trim();
+  const biz=document.getElementById('dc-biz').value.trim();
+  const notes=document.getElementById('dc-notes').value.trim();
+  if(!name||!phone){alert('Name and phone are required.');return;}
+  dir.push({id:Date.now(),name,phone,spec,biz,notes});
+  sv();['dc-name','dc-phone','dc-spec','dc-biz','dc-notes'].forEach(i=>document.getElementById(i).value='');
+  alert('Contact saved! 📞');setDirTab('list');refreshAll();
+}
+function deleteDir(id){if(!confirm('Remove this contact?'))return;dir=dir.filter(d=>d.id!==id);sv();renderDir();}
+
+function setDirTab(t){
+  ['list','add'].forEach(x=>{document.getElementById('dv-'+x).style.display=x===t?'block':'none';document.getElementById('dt-'+x).classList.toggle('active',x===t);});
+  if(t==='list')renderDir();
+}
+
+function renderDir(){
+  const el=document.getElementById('dir-list');
+  const q=(document.getElementById('dir-search').value||'').toLowerCase();
+  const filtered=dir.filter(d=>!q||(d.name+d.spec+d.biz).toLowerCase().includes(q));
+  el.innerHTML=filtered.length?filtered.map(d=>`
+    <div class="dir-card">
+      <div class="dir-info">
+        <div class="dir-name">${d.name}</div>
+        <div class="dir-meta">${d.phone}</div>
+        <div class="dir-spec">${d.spec||''}${d.biz?' · '+d.biz:''}</div>
+        ${d.notes?`<div class="dir-spec" style="font-style:italic">${d.notes}</div>`:''}
+      </div>
+      <div class="dir-actions">
+        <a class="call-btn" href="tel:${d.phone}">📞 Call</a>
+        <a class="wa-btn" href="https://wa.me/${d.phone.replace(/[^0-9]/g,'')}" target="_blank">💬 WhatsApp</a>
+        <button class="btn btn-sm" style="background:var(--tcd);color:var(--tc);border:1px solid var(--tcb);font-size:10px" onclick="deleteDir(${d.id})">Remove</button>
+      </div>
+    </div>`).join(''):'<div class="empty">No contacts yet. Add your contractors and suppliers.</div>';
+}
+
+// ── REVENUE ───────────────────────────────────────────────────────
+function setRevP(p){revP=p;['today','week','month'].forEach(x=>document.getElementById('rv-'+x).classList.toggle('active',x===p));renderRev();}
+function getStart(p){if(p==='today')return tod();const n=new Date();if(p==='week'){const d=new Date(n);d.setDate(d.getDate()-6);return d.toISOString().split('T')[0];}const d=new Date(n);d.setDate(1);return d.toISOString().split('T')[0];}
+
+function renderRev(){
+  const s=getStart(revP);
+  const fb=bk.filter(b=>b.checkin>=s&&b.status!=='reserved');
+  const fe=ex.filter(e=>e.date>=s);
+  const frc=rc.filter(c=>c.date>=s);
+  const tR=fb.reduce((a,b)=>a+b.amount,0);
+  const nR=fb.filter(b=>b.bookingType==='pernight').reduce((a,b)=>a+b.amount,0);
+  const lR=fb.filter(b=>b.bookingType==='longterm').reduce((a,b)=>a+b.amount,0);
+  const tE=fe.reduce((a,e)=>a+e.amount,0);
+  const tReno=frc.reduce((a,c)=>a+(parseFloat(c.amount)||0),0);
+  const profit=tR-tE-tReno;
+  document.getElementById('rv-tot').textContent=fmt(tR);
+  document.getElementById('rv-cnt').textContent=fb.length+' bookings';
+  document.getElementById('rv-night').textContent=fmt(nR);
+  document.getElementById('rv-lt').textContent=fmt(lR);
+  document.getElementById('rv-exp').textContent=fmt(tE);
+  document.getElementById('rv-reno').textContent=fmt(tReno);
+  document.getElementById('rv-prof').textContent=fmt(profit);
+  document.getElementById('rv-prof').className='s-v '+(profit>=0?'moss':'tc');
+  // payment breakdown
+  const pm={};fb.forEach(b=>{pm[b.payment]=(pm[b.payment]||0)+b.amount;});
+  document.getElementById('rv-pay').innerHTML=Object.keys(pm).length?Object.entries(pm).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="rr"><span style="text-transform:capitalize">${k}</span><strong style="color:var(--clay)">${fmt(v)}</strong></div>`).join(''):'<div class="empty">No data yet.</div>';
+  // reno breakdown
+  const rm={};frc.forEach(c=>{rm[c.room]=(rm[c.room]||0)+(parseFloat(c.amount)||0);});
+  const maxRM=Math.max(...Object.values(rm),1);
+  document.getElementById('rv-reno-break').innerHTML=Object.keys(rm).length?Object.entries(rm).sort((a,b)=>b[1]-a[1]).map(([room,v])=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Room ${room}</span><strong style="color:var(--clay)">${fmt(v)}</strong></div><div class="rep-bar"><div class="rep-fill" style="width:${Math.round(v/maxRM*100)}%"></div></div></div>`).join(''):'<div class="empty">No reno costs this period.</div>';
+  // occupancy
+  const occ=Math.round((bk.filter(b=>b.status==='checked-in').length/ROOMS.length)*100);
+  document.getElementById('rv-occ').innerHTML=`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>Current occupancy</span><strong style="color:var(--clay)">${occ}%</strong></div><div class="rep-bar"><div class="rep-fill" style="width:${occ}%"></div></div>`;
+}
+
+// ── EXPENSES ─────────────────────────────────────────────────────
+function addExpense(){
+  const d=document.getElementById('ex-desc').value.trim();
+  const a=parseFloat(document.getElementById('ex-amt').value);
+  const c=document.getElementById('ex-cat').value;
+  if(!d||!a){alert('Please fill description and amount.');return;}
+  ex.push({id:Date.now(),desc:d,amount:a,cat:c,date:tod()});
+  sv();document.getElementById('ex-desc').value='';document.getElementById('ex-amt').value='';
+  alert('Saved!');refreshAll();
+}
+function renderExp(){
+  const el=document.getElementById('exp-list');
+  const recent=[...ex].reverse().slice(0,12);
+  el.innerHTML=recent.length?recent.map(e=>`<div class="bi reno"><div style="display:flex;justify-content:space-between;align-items:center"><div class="bn">${e.desc}</div><strong style="color:var(--tc)">${fmt(e.amount)}</strong></div><div class="bm">${e.cat} · ${e.date}</div></div>`).join(''):'<div class="empty">No expenses yet.</div>';
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────
+function refreshAll(){
+  renderHome();renderAB();renderRev();renderExp();renderRenoSummary();renderFN();renderRC();renderDir();
+  document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+document.getElementById('b-ci').value=tod();
+document.getElementById('rc-date').value=tod();
+setRole('desk');
+popRoomSel();
+refreshAll();
+document.getElementById('rm-modal').addEventListener('click',e=>{if(e.target===document.getElementById('rm-modal'))closeM();});
+
+// push notification support
+if('Notification' in window && Notification.permission==='default'){
+  setTimeout(()=>{
+    if(fn.filter(n=>n.status==='open').length>0){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){
+          const open=fn.filter(n=>n.status==='open');
+          new Notification('Lodge Manager 🔧',{body:open.length+' open fix note'+(open.length>1?'s':'')+' need attention.',icon:''});
+        }
+      });
+    }
+  },3000);
+}
+
+// check unresolved notes every 60s and notify
+setInterval(()=>{
+  const open=fn.filter(n=>n.status==='open');
+  if(open.length&&'Notification' in window&&Notification.permission==='granted'){
+    const high=open.filter(n=>n.priority==='high');
+    if(high.length){new Notification('⚠️ Urgent Fix Needed',{body:high.length+' high priority fix note'+(high.length>1?'s':'')+' unresolved. Check the Repairs tab.'});}
+  }
+},60000);
+</script>
+</body>
+</html>
